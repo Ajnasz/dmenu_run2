@@ -1,0 +1,20 @@
+#!/bin/sh
+# This script extends the dmenu_run to include any custom commands
+# that you want to run. The custom commands are read from the file
+# specified by the environment variable DMENU_RUN_COMMANDS.
+# The file should contain one command per line.
+# The script also reads the executables from the directory specified
+# by the environment variable DMENU_RUN_BIN. The executables should
+# echo the commands to be included in the dmenu.
+
+{
+  dmenu_path;
+  if [ -d "$DMENU_RUN_BIN" ]; then
+    for i in "$DMENU_RUN_BIN"/*; do
+      [ -x "$i" ] && $i
+    done
+  fi
+  if [ -n "$DMENU_RUN_COMMANDS" ]; then
+    [ -f "$DMENU_RUN_COMMANDS" ] && cat "$DMENU_RUN_COMMANDS"
+  fi
+} | dmenu "$@" | ${SHELL:-"/bin/sh"} &
