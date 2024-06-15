@@ -1,20 +1,59 @@
-#!/bin/sh
-# This script extends the dmenu_run to include any custom commands
-# that you want to run. The custom commands are read from the file
-# specified by the environment variable DMENU_RUN_COMMANDS.
-# The file should contain one command per line.
-# The script also reads the executables from the directory specified
-# by the environment variable DMENU_RUN_BIN. The executables should
-# echo the commands to be included in the dmenu.
+#!/usr/bin/env sh
+
+# This script extends the functionality of dmenu_run by allowing the user to
+# include custom commands and executables. The custom commands are read from a
+# file specified by the environment variable DMENU_RUN_COMMANDS, and the
+# executables are read from a directory specified by the environment variable
+# DMENU_RUN_BIN.
+#
+# Environment Variables:
+#   DMENU_RUN_COMMANDS: Path to a file containing custom commands to be included
+#                       in the dmenu. The file should contain one command per line.
+#
+#   DMENU_RUN_BIN: Path to a directory containing executables to be included in
+#                  the dmenu. The executables should echo the commands to be
+#                  included in the dmenu.
+#
+# Usage:
+#   Set the environment variables DMENU_RUN_COMMANDS and DMENU_RUN_BIN to point
+#   to your custom commands file and executables directory, respectively. Then,
+#   run the script. The script will add the custom commands and executables to
+#   the dmenu.
+#
+#   Example:
+#     export DMENU_RUN_COMMANDS=/path/to/commands.txt
+#     export DMENU_RUN_BIN=/path/to/bin
+#     ./dmenu_run_extended.sh
+#
+# Note:
+#   The script assumes that all files in the DMENU_RUN_BIN directory are
+#   executable and that they will echo the correct commands. Ensure that these
+#   conditions are met to avoid unexpected behavior.
+#
+#   The script runs in the background, and the selected command from the dmenu
+#   is executed in a subshell.
+
+if [ -z "$DMENU_RUN_BIN" ] || [ ! -d "$DMENU_RUN_BIN" ];then
+  echo "DMENU_RUN_BIN is not set or is not a directory" >&2
+fi
+
+if [ -z "$DMENU_RUN_COMMANDS" ] || [ ! -f "$DMENU_RUN_COMMANDS" ];then
+  echo "DMENU_RUN_COMMANDS is not set or is not a file" >&2
+fi
 
 {
+  # always include dmenu_path
   dmenu_path;
-  if [ -d "$DMENU_RUN_BIN" ]; then
-    for i in "$DMENU_RUN_BIN"/*; do
-      [ -x "$i" ] && $i
-    done
+
+  # include executables from DMENU_RUN_BIN
+  if [ -n "$DMENU_RUN_BIN" ] && [ -d "$DMENU_RUN_BIN" ]; then
+    find "$DMENU_RUN_BIN" -maxdepth 1 -type f -executable -exec {} \;
   fi
-  if [ -n "$DMENU_RUN_COMMANDS" ]; then
-    [ -f "$DMENU_RUN_COMMANDS" ] && cat "$DMENU_RUN_COMMANDS"
+
+  # include custom commands from DMENU_RUN_COMMANDS
+  if [ -n "$DMENU_RUN_COMMANDS" ] && [ -f "$DMENU_RUN_COMMANDS" ]; then
+      cat "$DMENU_RUN_COMMANDS"
   fi
-} | dmenu "$@" | ${SHELL:-"/bin/sh"} &
+} | dmenu "$@" | ${SHELL:-"/usr/bin/env sh"} &
+
+exit 0;
