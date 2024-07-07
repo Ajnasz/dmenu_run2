@@ -45,7 +45,7 @@ fi
   # always include dmenu_path
   dmenu_path;
 
-  # include executables from DMENU_RUN_BIN
+  # include output of executables from DMENU_RUN_BIN
   if [ -n "$DMENU_RUN_BIN" ] && [ -d "$DMENU_RUN_BIN" ]; then
     find "$DMENU_RUN_BIN" -maxdepth 1 -type f -executable -exec {} \;
   fi
