@@ -21,9 +21,8 @@
 #   the dmenu.
 #
 #   Example:
-#     export DMENU_RUN_COMMANDS=/path/to/commands.txt
-#     export DMENU_RUN_BIN=/path/to/bin
-#     ./dmenu_run_extended.sh
+#     DMENU_RUN_COMMANDS=/path/to/commands.txt DMENU_RUN_BIN=/path/to/bin \
+#     ./dmenu_run2
 #
 # Note:
 #   The script assumes that all files in the DMENU_RUN_BIN directory are
