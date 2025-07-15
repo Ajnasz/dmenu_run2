@@ -57,7 +57,6 @@ cleanup() {
   rm -f "$DMENU_FIFO" "$DMENU_ALL_COMMANDS"
 }
 
-
 # Function to process commands and aliases
 process_custom_commands() {
   while IFS= read -r line || [ -n "$line" ]; do
@@ -104,7 +103,6 @@ resolve_alias() {
   done
 }
 
-
 if [ -z "$DMENU_RUN_BIN" ] || [ ! -d "$DMENU_RUN_BIN" ];then
   echo "Warning: DMENU_RUN_BIN is not set or is not a directory" >&2
 fi
@@ -125,7 +123,6 @@ mkfifo "$DMENU_FIFO"
 
 # Create temp file for alias resolution (still needed)
 DMENU_ALL_COMMANDS="$(mktemp -t dmenu_run2_XXXXXX)"
-
 
 trap cleanup EXIT INT TERM
 
