@@ -8,15 +8,13 @@
 #
 # Environment Variables:
 #   DMENU_RUN_COMMANDS: Path to a file containing custom commands to be included
-#                       in the dmenu. The file should contain one command per line.
-#                       Each line can be a regular command or an alias defined in the
-#                       format:
-#                       alias name="command --with-args"
-#                       alias name="command2"
+#                       in the dmenu.
+#                       Each line can be a regular command or an alias
 #
 #   DMENU_RUN_BIN: Path to a directory containing executables.
 #                  The executables should echo the commands to be included in
 #                  the dmenu.
+#                  If executable should print a command or an alias.
 #
 # Usage:
 #   Set the environment variables DMENU_RUN_COMMANDS and DMENU_RUN_BIN to point
@@ -28,6 +26,14 @@
 #     DMENU_RUN_COMMANDS=/path/to/commands.txt DMENU_RUN_BIN=/path/to/bin \
 #     ./dmenu_run2
 #
+# Aliases:
+#  If you want to include aliases in the dmenu, you can define them in the following
+#  forrmat:
+#    alias name="command --with-args"
+#    alias name with spaces="command2"
+#   The script will extract the alias name and command from the alias definition
+#   and include them in the dmenu.
+#
 # Note:
 #   The script assumes that all files in the DMENU_RUN_BIN directory are
 #   executable and that they will echo the correct commands. Ensure that these
@@ -37,48 +43,42 @@
 #   is executed in a subshell.
 
 # Function to extract alias name from alias definition
-# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 extract_alias_name() {
   printf '%s\n' "$1" | sed 's/^alias \([^=]*\)=.*/\1/'
 }
 
 # Function to extract alias command from alias definition
-# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 extract_alias_command() {
   printf '%s\n' "$1" | sed 's/^alias [^=]*=//' | sed 's/^"\(.*\)"$/\1/'
 }
 
-# Function to process custom commands and aliases
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
+cleanup() {
+  rm -f "$DMENU_FIFO" "$DMENU_ALL_COMMANDS"
+}
+
+
+# Function to process commands and aliases
 process_custom_commands() {
-  if [ -n "$DMENU_RUN_COMMANDS" ] && [ -f "$DMENU_RUN_COMMANDS" ]; then
-    while IFS= read -r line || [ -n "$line" ]; do
-      # Skip comments and empty lines
-      case "$line" in
-        \#*|'') continue ;;
-        alias\ *=*)
-          # Extract and display alias name only
-          extract_alias_name "$line"
-          ;;
-        *)
-          # Regular command
-          printf '%s\n' "$line"
-          ;;
-      esac
-    done < "$DMENU_RUN_COMMANDS"
-  fi
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    case "$line" in
+      \#*|'') continue ;;
+      alias\ *=*)
+        # Extract and display alias name only
+        extract_alias_name "$line"
+        ;;
+      *)
+        # Regular command
+        printf '%s\n' "$line"
+        ;;
+    esac
+  done
 }
 
 # Function to resolve alias to its command
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 resolve_alias() {
-  if [ -z "$DMENU_RUN_COMMANDS" ] || [ ! -f "$DMENU_RUN_COMMANDS" ]; then
-    # echo the stdin input to stdout
-    while IFS= read -r selected || [ -n "$selected" ]; do
-      printf '%s\n' "$selected"
-    done
-    return 0
-  fi
   while IFS= read -r selected || [ -n "$selected" ]; do
     # read $DMENU_RUN_COMMANDS and resolve aliases
     while IFS= read -r line || [ -n "$line" ]; do
@@ -89,37 +89,47 @@ resolve_alias() {
             alias_command=$(extract_alias_command "$line")
             # If selected item is an alias, print its command
             printf '%s\n' "$alias_command"
-            return 0
+            break
           fi
           ;;
         *)
           # If selected item is a regular command, print it as is
           if [ "$selected" = "$line" ]; then
             printf '%s\n' "$line"
-            return 0
+            break
           fi
           ;;
       esac
-    done < "$DMENU_RUN_COMMANDS"
-    printf '%s\n' "$selected"
+    done < "$DMENU_ALL_COMMANDS"
   done
 }
 
 
 if [ -z "$DMENU_RUN_BIN" ] || [ ! -d "$DMENU_RUN_BIN" ];then
-  echo "DMENU_RUN_BIN is not set or is not a directory" >&2
+  echo "Warning: DMENU_RUN_BIN is not set or is not a directory" >&2
 fi
 
 if [ -z "$DMENU_RUN_COMMANDS" ] || [ ! -f "$DMENU_RUN_COMMANDS" ];then
-  echo "DMENU_RUN_COMMANDS is not set or is not a file" >&2
+  echo "Warning: DMENU_RUN_COMMANDS is not set or is not a file" >&2
 fi
 
-DMENU="dmenu"
+DMENU="${DMENU:-dmenu}"
 # DMENU="rofi -dmenu -i -no-fixed-num-lines -no-show-icons"
 if [ -n "$WAYLAND_DISPLAY" ]; then
   DMENU="bemenu"
 fi
 
+# Create FIFO for streaming to dmenu
+DMENU_FIFO="$(mktemp -u -t dmenu_fifo_XXXXXX)"
+mkfifo "$DMENU_FIFO"
+
+# Create temp file for alias resolution (still needed)
+DMENU_ALL_COMMANDS="$(mktemp -t dmenu_run2_XXXXXX)"
+
+
+trap cleanup EXIT INT TERM
+
+# Populate both FIFO and temp file simultaneously
 {
   # include output of executables from DMENU_RUN_BIN
   if [ -n "$DMENU_RUN_BIN" ] && [ -d "$DMENU_RUN_BIN" ]; then
@@ -128,14 +138,33 @@ fi
 
   # include custom commands from DMENU_RUN_COMMANDS
   if [ -n "$DMENU_RUN_COMMANDS" ] && [ -f "$DMENU_RUN_COMMANDS" ]; then
-      process_custom_commands < "$DMENU_RUN_COMMANDS"
+      cat "$DMENU_RUN_COMMANDS"
   fi
 
   # always include dmenu_path
   if [ "$DMENU_NO_PATH" != "true" ]; then
     dmenu_path;
   fi
+} | tee "$DMENU_ALL_COMMANDS" > "$DMENU_FIFO" &
+TEES_PID=$!
 
-} | $DMENU "$@" | resolve_alias | env FZF="$DMENU $*" "${SHELL:-"/usr/bin/env sh"}" &
+# Process and execute
+if process_custom_commands < "$DMENU_FIFO" | $DMENU "$@" | resolve_alias | env FZF="$DMENU $*" "${SHELL:-"/usr/bin/env sh"}" &
+then
+DMENU_PID=$!
+else
+    echo "Failed to start dmenu process" >&2
+    kill $TEES_PID 2>/dev/null
+    exit 1
+fi
 
-exit 0;
+wait $TEES_PID
+TEE_EXIT=$?
+if [ $TEE_EXIT -ne 0 ]; then
+    echo "Warning: Data population process failed" >&2
+fi
+
+wait $DMENU_PID
+DMENU_EXIT=$?
+# Don't cleanup here since trap will handle it
+exit $DMENU_EXIT
