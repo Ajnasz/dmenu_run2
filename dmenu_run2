@@ -36,6 +36,10 @@
 #                  the dmenu.
 #                  If executable should print a command or an alias.
 #
+#   DMENU_NO_PATH: If set to "true", the script will not include the output of
+#                   dmenu_path in the dmenu. This can be useful if you want to
+#                   avoid cluttering the dmenu with system paths.
+#
 # Usage:
 #   Set the environment variables DMENU_RUN_COMMANDS and DMENU_RUN_BIN to point
 #   to your custom commands file and executables directory, respectively. Then,

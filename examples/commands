@@ -1,10 +1,5 @@
 nmcli radio wifi on
 nmcli radio wifi off
-xrandr --output DP-1-1 --primary
-xrandr --output eDP-1 --primary
-systemctl reboot
-alias suspend="systemctl suspend"
-alias poweroff="systemctl poweroff"
-intelbacklight -set 50
-intelbacklight -max
-intelbacklight -min
+alias reboot=systemctl reboot
+alias suspend=systemctl suspend
+alias poweroff=systemctl poweroff
