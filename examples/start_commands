@@ -1,0 +1,8 @@
+gimp
+darktable
+spotify
+waterfox
+thunderbird
+chromium
+alias firefox="waterfox"
+alias netselect="dmenu_script $HOME/src/personal/dmenu_run2/examples/script/select-network.sh -f -sf '#ff69b4' -sb 'black' -nf '#1e90ff' -l 10 -fn 'MonaspaceXenon-12' -p 'Select network:'"
