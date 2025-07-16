@@ -41,6 +41,19 @@
 #
 #   The script runs in the background, and the selected command from the dmenu
 #   is executed in a subshell.
+#
+# FZF environment variable:
+#   The script sets the FZF environment variable to the original dmenu command
+#   This allows you to open dmenu with the same options as the original dmenu_run2
+#   example script to search for words in the dictionary with dmenu or fzf:
+#     > cat /usr/local/bin/words
+#     #/usr/bin/env sh
+#
+#     fuzzy_find="${FZF:-fzf}"
+#     $fuzzy_find < /usr/share/dict/words
+#
+#   If the `words` script called from dmenu_run2 the use dmenu to select a word
+#   otherwise it will use `fzf`
 
 # Function to extract alias name from alias definition
 extract_alias_name() {

@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# Interactive Dmenu Command Pipeline
+#
+# This script accepts an executable file as input and creates an interactive
+# pipeline where the output of each command execution becomes input for dmenu,
+# and the dmenu selection becomes input for the next command execution.
+#
+# Usage: ./dmenu_script <executable_file> <dmenu_options>
+#
+# The executable file should accept an optional argument and output selectable
+# options.
+# The loop continues until an empty selection is made or either the script or
+# dmenu execution failed.
+#
+# Example:
+# ./dmenu_script my_command.sh -l 15 -p "Select an option:" -fn 'monospace-10' -nb '#222222' -nf lightblue -sb black -sf pink
+#
+# Example of `my_command.sh`:
+#   #!/usr/bin/env sh
+#
+#   case "$1" in
+#     "")
+#       printf 'foo\nnon existing command'
+#       ;;
+#     "foo")
+#       echo "bar"
+#       ;;
+#     "bar")
+#       # final command selected, perform some action
+#       exit 0
+#       ;;
+#     *)
+#       echo "Invalid argument: $1" >&2
+#       echo "Usage: $0 <foo|bar>" >&2
+#       exit 1
+#   esac
+
+if [ $# -eq 0 ];then
+  exit 0
+fi
+
+if [ ! -e "$1" ];then
+  echo "File $1 does not exist." >&2
+  exit 1
+fi
+
+if [ ! -x "$1" ];then
+  echo "File $1 is not executable." >&2
+  exit 1
+fi
+
+script_name="$1"
+shift
+
+DMENU="${DMENU:-dmenu}"
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  DMENU="bemenu"
+fi
+
+while true;do
+  if [ -z "$ret" ];then
+    if ! ret="$($script_name)";then
+      echo "Command execution failed." >&2
+      exit 1
+    fi
+  else
+    if ! ret="$($script_name "$ret")";then
+      echo "Command execution failed." >&2
+      exit 1
+    fi
+  fi
+
+  if [ -z "$ret" ];then
+    exit 0
+  fi
+
+  if ! ret="$(echo "$ret" | $DMENU "$@")";then
+    echo "Dmenu selection failed or was cancelled." >&2
+    exit 1
+  fi
+done
