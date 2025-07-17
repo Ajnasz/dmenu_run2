@@ -166,8 +166,11 @@ trap cleanup EXIT INT TERM
 # Populate both FIFO and temp file simultaneously
 {
   # include output of executables from DMENU_RUN_BIN
-  if [ -n "$DMENU_RUN_BIN" ] && [ -d "$DMENU_RUN_BIN" ]; then
-    find "$DMENU_RUN_BIN" -maxdepth 1 -type f -executable -exec {} \;
+  if [ -n "$DMENU_RUN_BIN" ]; then
+    DMENU_RUN_BIN=$(realpath "$DMENU_RUN_BIN")
+    if [ -d "$DMENU_RUN_BIN" ]; then
+      find "$DMENU_RUN_BIN" -maxdepth 1 -type f -executable -exec {} \;
+    fi
   fi
 
   # include custom commands from DMENU_RUN_COMMANDS
