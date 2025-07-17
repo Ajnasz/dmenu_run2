@@ -138,13 +138,14 @@ export DMENU_NO_PATH="true"
 ### Complete Setup
 
 1. Create directories:
+
 ```bash
 mkdir -p ~/.config/dmenu/scripts
 ```
 
-2. Create commands file:
+2. Create commands file `~/.config/dmenu/commands`:
+
 ```bash
-cat > ~/.config/dmenu/commands << 'EOF'
 # System controls
 systemctl suspend
 systemctl poweroff
@@ -157,12 +158,11 @@ nmcli radio wifi off
 # Aliases
 alias lock="i3lock -c 000000"
 alias screenshot="scrot ~/Pictures/screenshot_%Y%m%d_%H%M%S.png"
-EOF
 ```
 
-3. Create a network script:
+3. Create a network script ~/.config/dmenu/scripts/network:
+
 ```bash
-cat > ~/.config/dmenu/scripts/network << 'EOF'
 #!/bin/sh
 nmcli -f active,name connection show | awk 'BEGIN { FS="  +" } NR > 1 {
   if ($1 == "no") {
@@ -171,12 +171,14 @@ nmcli -f active,name connection show | awk 'BEGIN { FS="  +" } NR > 1 {
     printf("alias %s down=nmcli connection down \"%s\"\n", $2, $2)
   }
 }'
-EOF
+
+```bash
 chmod +x ~/.config/dmenu/scripts/network
 ```
 
 4. Add to i3 config:
-```
+
+```i3config
 bindsym $mod+d exec DMENU_RUN_BIN="$HOME/.config/dmenu/scripts" DMENU_RUN_COMMANDS="$HOME/.config/dmenu/commands" dmenu_run2 -p 'Run:'
 ```
 
@@ -236,10 +238,9 @@ The script creates a loop where:
 
 ### Example Script
 
-Create an interactive script that responds to selections:
+Create an interactive script that responds to selections ~/.config/dmenu/scripts/interactive_example:
 
 ```bash
-cat > ~/.config/dmenu/scripts/interactive_example << 'EOF'
 #!/usr/bin/env sh
 
 case "$1" in
@@ -277,7 +278,9 @@ case "$1" in
     exit 1
     ;;
 esac
-EOF
+```
+
+```bash
 chmod +x ~/.config/dmenu/scripts/interactive_example
 ```
 
@@ -305,10 +308,9 @@ Interactive scripts should:
 
 ### Advanced Example
 
-Here's a system monitor that demonstrates the interactive pipeline concept:
+Here's a system monitor that demonstrates the interactive pipeline concept ~/.config/dmenu/scripts/system_monitor:
 
 ```bash
-cat > ~/.config/dmenu/scripts/system_monitor << 'EOF'
 #!/usr/bin/env sh
 
 case "$1" in
@@ -366,8 +368,9 @@ case "$1" in
         exit 1
         ;;
 esac
+```
 
-EOF
+```bash
 chmod +x ~/.config/dmenu/scripts/system_monitor
 ```
 
