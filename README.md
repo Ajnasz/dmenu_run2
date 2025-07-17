@@ -208,15 +208,6 @@ sudo apt install bemenu
 sudo pacman -S bemenu
 ```
 
-## License
-
-MIT License - See the script header for full license text.
-
-## Author
-
-Lajos Koszti <lajos@koszti.hu>
-Blog: https://ajnasz.hu
-
 ## Related Links
 
 - [Original blog post](https://ajnasz.hu/blog/20250213/enhancing-dmenu_run--a-customizable-application-launcher-for-i3)
@@ -388,3 +379,7 @@ This example shows practical navigation:
 5. **Third run**: Shows top memory-consuming processes + actions
 
 Each selection navigates deeper into system information while maintaining context.
+
+## License
+
+MIT License - See the script header for full license text.
