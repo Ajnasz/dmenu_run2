@@ -224,3 +224,167 @@ Blog: https://ajnasz.hu
 - [dmenu](https://tools.suckless.org/dmenu/)
 - [bemenu](https://github.com/Cloudef/bemenu)
 - [i3 window manager](https://i3wm.org/)
+
+## Interactive Pipeline Script (`dmenu_script`)
+
+The repository also includes `dmenu_script`, a utility that creates interactive command pipelines where each dmenu selection becomes input for the next command execution.
+
+### How It Works
+
+The script creates a loop where:
+1. An executable script generates options
+2. User selects an option via dmenu
+3. The selection becomes input to the script for the next iteration
+4. Process continues until empty selection or command completion
+
+### Usage
+
+```bash
+./dmenu_script <executable_file> <dmenu_options>
+```
+
+### Example Script
+
+Create an interactive script that responds to selections:
+
+```bash
+cat > ~/.config/dmenu/scripts/interactive_example << 'EOF'
+#!/usr/bin/env sh
+
+case "$1" in
+  "")
+    # Initial menu
+    printf 'System\nNetwork\nApplications'
+    ;;
+  "System")
+    printf 'Lock Screen\nSuspend\nReboot\nShutdown'
+    ;;
+  "Network")
+    printf 'WiFi On\nWiFi Off\nConnections'
+    ;;
+  "Applications")
+    printf 'Firefox\nTerminal\nText Editor'
+    ;;
+  "Lock Screen")
+    i3lock -c 000000
+    exit 0
+    ;;
+  "Suspend")
+    systemctl suspend
+    exit 0
+    ;;
+  "WiFi On")
+    nmcli radio wifi on
+    exit 0
+    ;;
+  "Firefox")
+    firefox &
+    exit 0
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    exit 1
+    ;;
+esac
+EOF
+chmod +x ~/.config/dmenu/scripts/interactive_example
+```
+
+### Running Interactive Scripts
+
+```bash
+# Basic usage
+./dmenu_script ~/.config/dmenu/scripts/interactive_example
+
+# With dmenu options
+./dmenu_script ~/.config/dmenu/scripts/interactive_example -p "Select:" -l 10
+
+# i3 binding
+bindsym $mod+i exec /path/to/dmenu_script ~/.config/dmenu/scripts/interactive_example -p "Menu:"
+```
+
+### Script Requirements
+
+Interactive scripts should:
+- Accept an optional argument (`$1`)
+- Output selectable options (one per line)
+- Handle the empty case (`""`) for initial menu
+- Exit with status 0 when a final action is performed
+- Exit with non-zero status on errors
+
+### Advanced Example
+
+Here's a system monitor that demonstrates the interactive pipeline concept:
+
+```bash
+cat > ~/.config/dmenu/scripts/system_monitor << 'EOF'
+#!/usr/bin/env sh
+
+case "$1" in
+    ""|"Back to main menu")
+        # Main menu
+        echo "CPU Usage"
+        echo "Memory Usage"
+        echo "Disk Usage"
+        echo "Network"
+        echo "Processes"
+        echo "Quit"
+        ;;
+    "CPU Usage")
+        # Show CPU info and options
+        top -bn1 | grep "Cpu(s)" | awk '{print $2}' | sed 's/%us,/% CPU usage/'
+        echo "Show top CPU processes"
+        echo "Back to main menu"
+        echo "Quit"
+        ;;
+    "Memory Usage")
+        # Show memory info and options
+        free -h | grep "Mem:" | awk '{printf "Memory: %s used / %s total\n", $3, $2}'
+        echo "Show memory-heavy processes"
+        echo "Back to main menu"
+        echo "Quit"
+        ;;
+    "Disk Usage")
+        # Show disk usage
+        df -h / | tail -1 | awk '{printf "Root: %s used / %s total (%s)\n", $3, $2, $5}'
+        echo "Back to main menu"
+        echo "Quit"
+        ;;
+    "Network")
+        # Show network info
+        echo "Active connections:"
+        ss -tuln | wc -l | awk '{printf "%d active connections\n", $1-1}'
+        echo "Show network connections"
+        echo "Back to main menu"
+        echo "Quit"
+        ;;
+    "Show top CPU processes")
+        ps aux --sort=-%cpu | head -6 | tail -5 | awk '{printf "%s: %.1f%%\n", $11, $3}'
+        echo "Back to main menu"
+        echo "Quit"
+        ;;
+    "Show memory-heavy processes")
+        ps aux --sort=-%mem | head -6 | tail -5 | awk '{printf "%s: %.1f%%\n", $11, $4}'
+        echo "Back to main menu"
+        ;;
+    "Quit")
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+esac
+
+EOF
+chmod +x ~/.config/dmenu/scripts/system_monitor
+```
+
+This example shows practical navigation:
+1. **First run**: Shows main system categories
+2. **User selects**: `Memory Usage`
+3. **Second run**: Shows current memory usage + options to drill down
+4. **User selects**: `Show memory-heavy processes`
+5. **Third run**: Shows top memory-consuming processes + actions
+
+Each selection navigates deeper into system information while maintaining context.
