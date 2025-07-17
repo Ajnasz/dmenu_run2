@@ -94,10 +94,10 @@ The script will extract the alias name for display and resolve to the actual com
 
 ## Dynamic Scripts
 
-Check the [examples/bin](examples/bin/) directory for additional example scripts:
-- **[examples/bin/network](examples/bin/network)**: NetworkManager connection management
-- **[examples/bin/bluetooth](examples/bin/bluetooth)**: Bluetooth device control
-- **[examples/bin/tmux](examples/bin/tmux)**: Tmux script loader
+Check the [examples/scripts](examples/scripts/) directory for additional example scripts:
+- **[examples/scripts/network](examples/scripts/network)**: NetworkManager connection management
+- **[examples/scripts/bluetooth](examples/scripts/bluetooth)**: Bluetooth device control
+- **[examples/scripts/tmux](examples/scripts/tmux)**: Tmux script loader
 
 All scripts in the repository are ready to use - just copy them to your `$DMENU_RUN_BIN` directory and make them executable.
 
