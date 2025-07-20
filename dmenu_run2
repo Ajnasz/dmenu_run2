@@ -148,10 +148,12 @@ if [ -z "$DMENU_RUN_COMMANDS" ] || [ ! -f "$DMENU_RUN_COMMANDS" ];then
   echo "Warning: DMENU_RUN_COMMANDS is not set or is not a file" >&2
 fi
 
-DMENU="${DMENU:-dmenu}"
-# DMENU="rofi -dmenu -i -no-fixed-num-lines -no-show-icons"
-if [ -n "$WAYLAND_DISPLAY" ]; then
-  DMENU="bemenu"
+if [ -z "$DMENU" ]; then
+  if [ -n "$WAYLAND_DISPLAY" ]; then
+    DMENU="bemenu"
+  else
+    DMENU="dmenu"
+  fi
 fi
 
 # Create FIFO for streaming to dmenu
