@@ -190,7 +190,7 @@ TEES_PID=$!
 # Process and execute
 if process_custom_commands < "$DMENU_FIFO" | $DMENU "$@" | resolve_alias | env FZF="$DMENU $*" "${SHELL:-"/usr/bin/env sh"}" &
 then
-DMENU_PID=$!
+  DMENU_PID=$!
 else
     echo "Failed to start dmenu process" >&2
     kill $TEES_PID 2>/dev/null
