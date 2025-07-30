@@ -77,17 +77,18 @@ systemctl suspend
 systemctl poweroff
 
 # Aliases
-alias wifi-on="nmcli radio wifi on"
-alias wifi-off="nmcli radio wifi off"
+alias wifi on="nmcli radio wifi on"
+alias wifi off="nmcli radio wifi off"
 alias suspend="systemctl suspend"
 ```
 
 ### Alias Format
 
-Aliases should follow this format:
+Extracting aliases is very simplExtracting aliases is very simple, it starts with the `alias` keyword followed by the alias name, followed by the equal sign `=` and the command. You can also include arguments and spaces in the alias name and the command.
+
 ```bash
-alias name="command --with-args"
-alias "name with spaces"="command2"
+alias name=command --with-args
+alias name with spaces=command2
 ```
 
 The script will extract the alias name for display and resolve to the actual command when selected.
